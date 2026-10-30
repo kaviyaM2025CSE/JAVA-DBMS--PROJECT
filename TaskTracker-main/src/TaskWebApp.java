@@ -1,4 +1,3 @@
-
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -20,8 +19,8 @@ public class TaskWebApp {
         server.createContext("/", new StaticFileHandler());
         server.createContext("/get-tasks", new GetTasksHandler());
         server.createContext("/submit-task", new AddTaskHandler());
-        server.createContext("/update-task", new UpdateTaskStatusHandler()); 
-        server.createContext("/delete-task", new DeleteTaskHandler());       
+        server.createContext("/update-task", new UpdateTaskStatusHandler());
+        server.createContext("/delete-task", new DeleteTaskHandler());
         
         server.setExecutor(null);
         System.out.println("🚀 VS Code Web Application started at http://localhost:8000/");
@@ -68,7 +67,6 @@ public class TaskWebApp {
             try {
                 List<Task> tasks = taskService.getAllTasks();
                 for (Task task : tasks) {
-                   
                     String statusBtn = task.getStatus().equalsIgnoreCase("PENDING") ?
                         "<a href='/update-task?id=" + task.getId() + "&status=COMPLETED' class='action-btn complete-btn'>Mark Completed</a>" :
                         "<a href='/update-task?id=" + task.getId() + "&status=PENDING' class='action-btn pending-btn'>Mark Pending</a>";
@@ -105,32 +103,40 @@ public class TaskWebApp {
                 String line;
                 while ((line = br.readLine()) != null) sb.append(line);
                 String formData = sb.toString();
+                System.out.println("📩 Received form data: " + formData);
                 
                 Map<String, String> inputs = parseFormData(formData);
                 String rawTitle = inputs.getOrDefault("title", "New Task");
                 String title = URLDecoder.decode(rawTitle, StandardCharsets.UTF_8);
                 String priority = inputs.getOrDefault("priority", "MEDIUM");
 
-                try { taskService.addTask(title, priority); } catch (SQLException e) { e.printStackTrace(); }
+                try { 
+                    taskService.addTask(title, priority); 
+                } catch (SQLException e) { 
+                    e.printStackTrace(); 
+                }
             }
             exchange.getResponseHeaders().set("Location", "/index.html");
             exchange.sendResponseHeaders(302, -1);
         }
 
+        
         private Map<String, String> parseFormData(String formData) {
             Map<String, String> result = new HashMap<>();
             if (formData != null && !formData.isEmpty()) {
                 for (String pair : formData.split("&")) {
                     String[] kv = pair.split("=");
-                    if (kv.length > 1) result.put(kv[0], kv[1]);
-                    else if (kv.length == 1) result.put(kv[0], "");
+                    if (kv.length > 1) {
+                        result.put(kv[0], kv[1]); 
+                    } else if (kv.length == 1) {
+                        result.put(kv[0], "");
+                    }
                 }
             }
             return result;
         }
     }
 
-    
     static class UpdateTaskStatusHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -139,17 +145,12 @@ public class TaskWebApp {
             int id = Integer.parseInt(params.get("id"));
             String status = params.get("status");
 
-            try {
-                taskService.updateTaskStatus(id, status);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            try { taskService.updateTaskStatus(id, status); } catch (SQLException e) { e.printStackTrace(); }
             exchange.getResponseHeaders().set("Location", "/index.html");
             exchange.sendResponseHeaders(302, -1);
         }
     }
 
-    
     static class DeleteTaskHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -157,11 +158,7 @@ public class TaskWebApp {
             Map<String, String> params = parseQuery(query);
             int id = Integer.parseInt(params.get("id"));
 
-            try {
-                taskService.deleteTask(id);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            try { taskService.deleteTask(id); } catch (SQLException e) { e.printStackTrace(); }
             exchange.getResponseHeaders().set("Location", "/index.html");
             exchange.sendResponseHeaders(302, -1);
         }
@@ -172,7 +169,9 @@ public class TaskWebApp {
         if (query != null) {
             for (String pair : query.split("&")) {
                 String[] kv = pair.split("=");
-                if (kv.length > 1) result.put(kv[0], kv[1]);
+                if (kv.length > 1) {
+                    result.put(kv[0], kv[1]);
+                }
             }
         }
         return result;
